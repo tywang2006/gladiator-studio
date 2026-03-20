@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { useIsMobile } from '@/shared/hooks/useIsMobile';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ export interface HeroProps {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export function Hero({ isPanelOpen = false }: HeroProps) {
+  const isMobile = useIsMobile();
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
   const springX = useSpring(rawX, SPRING);
@@ -200,10 +202,10 @@ export function Hero({ isPanelOpen = false }: HeroProps) {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       aria-label="Hero — Gladiator Studio"
-      style={{ position: 'relative', minHeight: '100svh', display: 'flex',
+      style={{ position: 'relative', height: '100%', display: 'flex',
         flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden', background: 'transparent', padding: '0 16px',
-        paddingTop: 50 }}
+        overflow: 'hidden', background: 'transparent',
+        padding: isMobile ? '40px 12px 56px' : '50px 16px 48px' }}
     >
       {/* Scanline overlay */}
       <div className="scanline-bg" aria-hidden="true"
@@ -222,22 +224,24 @@ export function Hero({ isPanelOpen = false }: HeroProps) {
 
         {/* Eyebrow badge */}
         <AnimatePresence>
-          <motion.div key="badge" variants={itemV} {...fadeOut} style={{ marginBottom: 24 }}>
+          <motion.div key="badge" variants={itemV} {...fadeOut} style={{ marginBottom: isMobile ? 16 : 24 }}>
             <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '6px 16px', borderRadius: 9999,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: isMobile ? '5px 12px' : '6px 16px', borderRadius: 9999,
               border: '1px solid rgba(79,195,247,0.2)', background: 'rgba(79,195,247,0.06)',
-              color: CYAN, fontFamily: MONO, fontSize: 11, fontWeight: 600,
+              color: CYAN, fontFamily: MONO, fontSize: isMobile ? 9 : 11, fontWeight: 600,
               letterSpacing: '0.18em', textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
             }}>
               <span className="animate-electric-pulse" aria-hidden="true"
                 style={{ width: 6, height: 6, borderRadius: '50%', background: CYAN,
-                  flexShrink: 0, display: 'inline-block' }} />
-              A MetaWin Studio —{' '}
-              <a href="https://metawin.com" target="_blank" rel="noopener noreferrer"
-                style={{ color: CYAN, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                metawin.com
-              </a>
+                  flexShrink: 0 }} />
+              <span>A MetaWin Studio —{' '}
+                <a href="https://metawin.com" target="_blank" rel="noopener noreferrer"
+                  style={{ color: CYAN, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                  metawin.com
+                </a>
+              </span>
             </span>
           </motion.div>
         </AnimatePresence>
@@ -247,7 +251,7 @@ export function Hero({ isPanelOpen = false }: HeroProps) {
           display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <h1 className="sr-only">Gladiator Studio</h1>
 
-          <div style={{ position: 'relative', width: 'clamp(240px,35vw,420px)', marginBottom: 4 }}>
+          <div style={{ position: 'relative', width: isMobile ? 'clamp(140px,45vw,240px)' : 'clamp(240px,35vw,420px)', marginBottom: 4 }}>
             <img
               src="/gladiator-hero.jpg"
               alt="Gladiator Studio — metallic winged helmet"
@@ -276,8 +280,8 @@ export function Hero({ isPanelOpen = false }: HeroProps) {
 
         {/* Stats bar */}
         <motion.div variants={itemV} aria-label="Studio statistics"
-          style={{ display: 'flex', alignItems: 'center', gap: 8,
-            flexWrap: 'wrap', justifyContent: 'center', marginTop: 16 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8,
+            flexWrap: 'wrap', justifyContent: 'center', marginTop: isMobile ? 12 : 16 }}>
           {STATS.map((s) => <StatPanel key={s.label} value={s.value} label={s.label} />)}
         </motion.div>
 

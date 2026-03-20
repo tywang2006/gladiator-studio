@@ -184,8 +184,9 @@ interface JobCardProps {
 
 function JobCard({ job, index, showDetails, onToggleDetails }: JobCardProps) {
   const btnBase: React.CSSProperties = {
-    ...MONO, clipPath: BEVEL, border: 'none', padding: '5px 12px', fontSize: '11px',
+    ...MONO, clipPath: BEVEL, border: 'none', padding: '5px 18px', fontSize: '11px',
     fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase' as const,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   };
 
   return (
@@ -250,7 +251,7 @@ function JobCard({ job, index, showDetails, onToggleDetails }: JobCardProps) {
           href={job.applyUrl}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ ...btnBase, background: CYAN, color: '#080c18', textDecoration: 'none', display: 'inline-block', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.4)' }}>
+          style={{ ...btnBase, background: CYAN, color: '#080c18', textDecoration: 'none', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.4)' }}>
           ▸ APPLY
         </a>
       </div>

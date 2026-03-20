@@ -17,8 +17,15 @@
   }
 
   html, body {
+    width: 100%;
+    min-height: 100%;
     background-color: #0a0a0f;
     background-color: var(--color-void);
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100svh;
   }
 
   body {

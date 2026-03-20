@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, Volume2, VolumeOff } from 'lucide-react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { Hero } from '@/features/hero/Hero';
 import { fetchGameData } from '@/api/gameData';
@@ -12,6 +12,7 @@ import { CLIENT_AREA_URL } from '@/shared/constants/urls';
 import { AgeGate, useAgeGate } from '@/shared/components/AgeGate';
 import { WarpIntro } from '@/shared/components/WarpIntro';
 import { soundEngine } from '@/shared/utils/soundEngine';
+import { useIsMobile } from '@/shared/hooks/useIsMobile';
 
 const LiveActivityFeed = lazy(() => import('@/features/live-feed/LiveActivityFeed').then(m => ({ default: m.LiveActivityFeed })));
 const GameShowcase = lazy(() => import('@/features/games/GameShowcase').then(m => ({ default: m.GameShowcase })));
@@ -477,6 +478,7 @@ const LEFT_PANELS: readonly PanelId[] = ['games', 'about', 'team', 'journey'];
 interface CommandButtonProps {
   readonly label: string; readonly panelId: PanelId;
   readonly active: boolean; readonly onClick: (id: PanelId) => void;
+  readonly isMobile?: boolean;
 }
 
 // ─── useValueFlash hook ────────────────────────────────────────────────────────
@@ -604,7 +606,7 @@ function HoloNoise() {
 
 // ─── Command button ───────────────────────────────────────────────────────────
 
-function CommandButton({ label, panelId, active, onClick }: CommandButtonProps) {
+function CommandButton({ label, panelId, active, onClick, isMobile = false }: CommandButtonProps) {
   const [hovered, setHovered] = useState(false);
   const lit = active || hovered;
 
@@ -629,8 +631,8 @@ function CommandButton({ label, panelId, active, onClick }: CommandButtonProps) 
             ? 'inset 0 1px 0 rgba(79,195,247,0.15), inset 0 -1px 0 rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.5), 0 0 12px rgba(79,195,247,0.15)'
             : 'inset 0 1px 0 rgba(79,195,247,0.15), inset 0 -1px 0 rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.5)',
         color: lit ? CYAN : 'rgba(255,255,255,0.5)',
-        padding: '10px 16px',
-        minWidth: '80px',
+        padding: isMobile ? '8px 10px' : '10px 16px',
+        minWidth: isMobile ? '60px' : '80px',
         minHeight: '44px',
         cursor: 'pointer',
         outline: 'none',
@@ -640,6 +642,7 @@ function CommandButton({ label, panelId, active, onClick }: CommandButtonProps) 
         textAlign: 'center' as const,
         whiteSpace: 'nowrap' as const,
         flexShrink: 0,
+        fontSize: isMobile ? '9px' : '10px',
       }}
     >
       {label}
@@ -681,7 +684,7 @@ function SoundToggle() {
         fontSize: '14px',
       }}
     >
-      {isMuted ? '🔇' : '🔊'}
+      {isMuted ? <VolumeOff size={14} /> : <Volume2 size={14} />}
     </button>
   );
 }
@@ -692,9 +695,10 @@ interface StatusBarProps {
   readonly isConnected: boolean;
   readonly totalEvents: number;
   readonly totalAmount: number;
+  readonly isMobile: boolean;
 }
 
-function StatusBar({ isConnected, totalEvents, totalAmount }: StatusBarProps) {
+function StatusBar({ isConnected, totalEvents, totalAmount, isMobile }: StatusBarProps) {
   const [caHovered, setCaHovered] = useState(false);
   const wagered = totalAmount >= 1000
     ? `$${(totalAmount / 1000).toFixed(1)}K`
@@ -718,73 +722,79 @@ function StatusBar({ isConnected, totalEvents, totalAmount }: StatusBarProps) {
         display: 'flex', alignItems: 'center',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         padding: '0 16px',
-        gap: '16px',
+        gap: isMobile ? '8px' : '16px',
         overflow: 'hidden',
       }}
     >
       <div aria-hidden="true" style={SCANLINE_STYLE} />
       <img src="/gladiator-logo.svg" alt="Gladiator Studio" style={{ height: '24px', width: 'auto', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(79,195,247,0.55))', position: 'relative', zIndex: 2 }} />
       <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM, flexShrink: 0 }} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, justifyContent: 'center', position: 'relative', zIndex: 2 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '20px', flex: 1, justifyContent: 'center', position: 'relative', zIndex: 2 }}>
         <span style={{ ...HUD, display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.45)' }}>
           <span aria-label={isConnected ? 'Connected' : 'Disconnected'} style={{ width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0, background: isConnected ? '#00ff88' : '#ff4444', boxShadow: isConnected ? '0 0 8px #00ff88' : '0 0 8px #ff4444', animation: isConnected ? 'pulse 2s infinite' : 'none' }} />
           {isConnected ? 'LIVE' : 'OFFLINE'}
         </span>
-        <span aria-hidden="true" style={{ width: '1px', height: '12px', background: CYAN_DIM }} />
-        <span style={{ ...HUD, color: 'rgba(255,255,255,0.45)' }}>
-          EVENTS:{' '}
-          <span
-            style={{
-              color: CYAN,
-              display: 'inline-block',
-              animation: eventsFlashing ? 'value-flash 0.6s ease-out' : 'none',
-            }}
-          >
-            {totalEvents.toLocaleString()}
-          </span>
-        </span>
-        <span aria-hidden="true" style={{ width: '1px', height: '12px', background: CYAN_DIM }} />
-        <span style={{ ...HUD, color: 'rgba(255,255,255,0.45)' }}>
-          WAGERED:{' '}
-          <span
-            style={{
-              color: '#FFD54F',
-              display: 'inline-block',
-              animation: amountFlashing ? 'value-flash-amber 0.6s ease-out' : 'none',
-            }}
-          >
-            {wagered}
-          </span>
-        </span>
+        {!isMobile && (
+          <>
+            <span aria-hidden="true" style={{ width: '1px', height: '12px', background: CYAN_DIM }} />
+            <span style={{ ...HUD, color: 'rgba(255,255,255,0.45)' }}>
+              EVENTS:{' '}
+              <span
+                style={{
+                  color: CYAN,
+                  display: 'inline-block',
+                  animation: eventsFlashing ? 'value-flash 0.6s ease-out' : 'none',
+                }}
+              >
+                {totalEvents.toLocaleString()}
+              </span>
+            </span>
+            <span aria-hidden="true" style={{ width: '1px', height: '12px', background: CYAN_DIM }} />
+            <span style={{ ...HUD, color: 'rgba(255,255,255,0.45)' }}>
+              WAGERED:{' '}
+              <span
+                style={{
+                  color: '#FFD54F',
+                  display: 'inline-block',
+                  animation: amountFlashing ? 'value-flash-amber 0.6s ease-out' : 'none',
+                }}
+              >
+                {wagered}
+              </span>
+            </span>
+          </>
+        )}
       </div>
       <SoundToggle />
-      <a
-        href={CLIENT_AREA_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        onMouseEnter={() => setCaHovered(true)}
-        onMouseLeave={() => setCaHovered(false)}
-        aria-label="Open client area in new tab"
-        style={{
-          ...HUD,
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          padding: '5px 12px',
-          minHeight: '36px',
-          clipPath: BEVEL,
-          color: CYAN,
-          textDecoration: 'none',
-          background: caHovered ? 'rgba(79,195,247,0.14)' : 'rgba(79,195,247,0.06)',
-          border: `1px solid ${caHovered ? 'rgba(79,195,247,0.5)' : CYAN_DIM}`,
-          boxShadow: caHovered ? '0 0 12px rgba(79,195,247,0.2)' : 'none',
-          transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
-          outline: 'none',
-          flexShrink: 0,
-          position: 'relative', zIndex: 2,
-        }}
-      >
-        CLIENT AREA
-        <ExternalLink style={{ width: '10px', height: '10px', flexShrink: 0 }} aria-hidden="true" />
-      </a>
+      {!isMobile && (
+        <a
+          href={CLIENT_AREA_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onMouseEnter={() => setCaHovered(true)}
+          onMouseLeave={() => setCaHovered(false)}
+          aria-label="Open client area in new tab"
+          style={{
+            ...HUD,
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '5px 12px',
+            minHeight: '36px',
+            clipPath: BEVEL,
+            color: CYAN,
+            textDecoration: 'none',
+            background: caHovered ? 'rgba(79,195,247,0.14)' : 'rgba(79,195,247,0.06)',
+            border: `1px solid ${caHovered ? 'rgba(79,195,247,0.5)' : CYAN_DIM}`,
+            boxShadow: caHovered ? '0 0 12px rgba(79,195,247,0.2)' : 'none',
+            transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
+            outline: 'none',
+            flexShrink: 0,
+            position: 'relative', zIndex: 2,
+          }}
+        >
+          CLIENT AREA
+          <ExternalLink style={{ width: '10px', height: '10px', flexShrink: 0 }} aria-hidden="true" />
+        </a>
+      )}
     </header>
   );
 }
@@ -796,6 +806,7 @@ interface ContentPanelProps {
   readonly side: 'left' | 'right';
   readonly onClose: () => void;
   readonly children: React.ReactNode;
+  readonly isMobile: boolean;
 }
 
 function PanelSpinner() {
@@ -806,7 +817,7 @@ function PanelSpinner() {
   );
 }
 
-function ContentPanel({ panelId, side, onClose, children }: ContentPanelProps) {
+function ContentPanel({ panelId, side, onClose, children, isMobile }: ContentPanelProps) {
   const isLeft = side === 'left';
 
   return (
@@ -820,9 +831,9 @@ function ContentPanel({ panelId, side, onClose, children }: ContentPanelProps) {
       style={{
         position: 'fixed',
         top: '40px',
-        bottom: '48px',
+        bottom: isMobile ? '52px' : '48px',
         [isLeft ? 'left' : 'right']: 0,
-        width: 'clamp(320px, 45vw, 680px)',
+        width: isMobile ? '100vw' : 'clamp(320px, 45vw, 680px)',
         ...PANEL_3D,
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
@@ -896,6 +907,7 @@ function ContentPanel({ panelId, side, onClose, children }: ContentPanelProps) {
 interface CommandBarProps {
   readonly activePanel: PanelId;
   readonly onActivate: (id: PanelId) => void;
+  readonly isMobile: boolean;
 }
 
 const CMD_BUTTONS: readonly { label: string; panelId: PanelId }[] = [
@@ -905,14 +917,14 @@ const CMD_BUTTONS: readonly { label: string; panelId: PanelId }[] = [
   { label: 'Contact', panelId: 'contact' },
 ] as const;
 
-function CommandBar({ activePanel, onActivate }: CommandBarProps) {
+function CommandBar({ activePanel, onActivate, isMobile }: CommandBarProps) {
   return (
     <nav
       role="navigation"
       aria-label="Command bar"
       style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        height: '48px',
+        height: isMobile ? '52px' : '48px',
         ...BAR_3D,
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
@@ -920,15 +932,29 @@ function CommandBar({ activePanel, onActivate }: CommandBarProps) {
         clipPath: 'polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)',
         display: 'flex', alignItems: 'center',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        padding: '0 16px',
-        gap: '8px',
+        padding: '0 8px',
+        gap: '4px',
         overflow: 'hidden',
       }}
     >
       <div aria-hidden="true" style={SCANLINE_STYLE} />
 
-      {/* Nav buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, position: 'relative', zIndex: 2, overflowX: 'auto' }}>
+      {/* Nav buttons — scrollable on mobile, fixed layout on desktop */}
+      <div
+        className="cmd-nav-scroll"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '4px' : '6px',
+          flex: 1,
+          position: 'relative',
+          zIndex: 2,
+          overflowX: 'auto',
+          // Hide scrollbar on all browsers
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
         {CMD_BUTTONS.map(({ label, panelId }) => (
           <CommandButton
             key={panelId}
@@ -936,15 +962,18 @@ function CommandBar({ activePanel, onActivate }: CommandBarProps) {
             panelId={panelId}
             active={activePanel === panelId}
             onClick={onActivate}
+            isMobile={isMobile}
           />
         ))}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, position: 'relative', zIndex: 2 }}>
-        <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM }} />
-        <span style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>&copy; 2026 Gladiator Studio &middot; A MetaWin Company</span>
-        <a href="#" style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.2)', textDecoration: 'underline', textUnderlineOffset: '2px', whiteSpace: 'nowrap', outline: 'none' }}>Resp. Gaming</a>
-      </div>
+      {!isMobile && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, position: 'relative', zIndex: 2 }}>
+          <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM }} />
+          <span style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>&copy; 2026 Gladiator Studio &middot; A MetaWin Company</span>
+          <a href="#" style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.2)', textDecoration: 'underline', textUnderlineOffset: '2px', whiteSpace: 'nowrap', outline: 'none' }}>Resp. Gaming</a>
+        </div>
+      )}
     </nav>
   );
 }
@@ -957,6 +986,7 @@ export function App() {
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [activePanel, setActivePanel] = useState<PanelId>('none');
   const [playingGame, setPlayingGame] = useState<{ title: string; link: string } | null>(null);
+  const isMobile = useIsMobile();
 
   const { isConnected, totalAmount, gladiatorCount, originalCount } = useFeederSocket();
   const totalEvents = gladiatorCount + originalCount;
@@ -1132,6 +1162,9 @@ export function App() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(79,195,247,0.25); border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(79,195,247,0.45); }
+
+        /* Hide horizontal scrollbar on command bar nav row */
+        .cmd-nav-scroll::-webkit-scrollbar { display: none; }
       `}</style>
 
       {/* 3D scene — always visible behind everything */}
@@ -1156,7 +1189,7 @@ export function App() {
           >
             <Hero isPanelOpen={false} panelSide={activeSide} />
           </motion.div>
-        ) : (
+        ) : !isMobile ? (
           <motion.div
             key="hero-mini"
             initial={{ opacity: 0, scale: 0.5 }}
@@ -1182,17 +1215,17 @@ export function App() {
           >
             <Hero isPanelOpen={true} panelSide={activeSide} />
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
 
       {/* Top HUD */}
-      <StatusBar isConnected={isConnected} totalEvents={totalEvents} totalAmount={totalAmount} />
+      <StatusBar isConnected={isConnected} totalEvents={totalEvents} totalAmount={totalAmount} isMobile={isMobile} />
 
       {/* Sliding content panels */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 40 }}>
         <AnimatePresence mode="wait">
           {activePanel !== 'none' && (
-            <ContentPanel key={activePanel} panelId={activePanel} side={activeSide} onClose={handleClose}>
+            <ContentPanel key={activePanel} panelId={activePanel} side={activeSide} onClose={handleClose} isMobile={isMobile}>
               <ErrorBoundary>
                 <Suspense fallback={<PanelSpinner />}>
                   {activePanel === 'games' && (
@@ -1216,7 +1249,7 @@ export function App() {
       </div>
 
       {/* Bottom command bar */}
-      <CommandBar activePanel={activePanel} onActivate={handleActivate} />
+      <CommandBar activePanel={activePanel} onActivate={handleActivate} isMobile={isMobile} />
 
       {/* Game iframe overlay — animated entry + fullscreen support */}
       <AnimatePresence>
@@ -1240,10 +1273,12 @@ export function App() {
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               style={{
-                width: '90vw', maxWidth: 1400, aspectRatio: '16/9',
+                ...(isMobile
+                  ? { width: '100vw', height: '100vh', maxWidth: '100vw', borderRadius: 0 }
+                  : { width: '90vw', maxWidth: 1400, aspectRatio: '16/9' }),
                 ...PANEL_3D,
-                border: '1px solid rgba(79,195,247,0.4)',
-                clipPath: BEVEL,
+                border: isMobile ? 'none' : '1px solid rgba(79,195,247,0.4)',
+                clipPath: isMobile ? 'none' : BEVEL,
                 overflow: 'hidden',
                 display: 'flex', flexDirection: 'column',
               }}
@@ -1253,37 +1288,39 @@ export function App() {
               {/* Title bar */}
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '8px 16px',
+                padding: isMobile ? '6px 10px' : '8px 16px',
                 borderBottom: '1px solid rgba(79,195,247,0.25)',
                 ...BAR_3D,
                 flexShrink: 0,
               }}>
-                <span style={{ ...HUD, color: CYAN, fontSize: '11px' }}>
+                <span style={{ ...HUD, color: CYAN, fontSize: isMobile ? '9px' : '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: isMobile ? '40vw' : 'none' }}>
                   ▸ {playingGame.title.toUpperCase()}
                 </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {/* Fullscreen button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const container = e.currentTarget.closest('[data-game-container]') as HTMLElement | null;
-                      if (container) {
-                        if (document.fullscreenElement) {
-                          document.exitFullscreen();
-                        } else {
-                          container.requestFullscreen();
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {/* Fullscreen button — hide on mobile since it's already full-viewport */}
+                  {!isMobile && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const container = e.currentTarget.closest('[data-game-container]') as HTMLElement | null;
+                        if (container) {
+                          if (document.fullscreenElement) {
+                            document.exitFullscreen();
+                          } else {
+                            container.requestFullscreen();
+                          }
                         }
-                      }
-                    }}
-                    style={{
-                      ...HUD, color: CYAN, fontSize: '10px',
-                      ...BTN_3D,
-                      padding: '5px 14px', cursor: 'pointer',
-                      clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
-                    }}
-                  >
-                    ⛶ FULLSCREEN
-                  </button>
+                      }}
+                      style={{
+                        ...HUD, color: CYAN, fontSize: '10px',
+                        ...BTN_3D,
+                        padding: '5px 14px', cursor: 'pointer',
+                        clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
+                      }}
+                    >
+                      ⛶ FULLSCREEN
+                    </button>
+                  )}
                   {/* Close button */}
                   <button
                     onClick={() => { sceneEvents.emitBlackhole(false); setPlayingGame(null); }}
