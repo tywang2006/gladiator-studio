@@ -1,13 +1,12 @@
 'use client';
 
 import { useCallback } from 'react';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const MONO = "'SF Mono', 'Menlo', 'Consolas', 'Courier New', monospace";
 const CYAN = '#4fc3f7';
-const BG   = '#0a0a0f';
 
 const STATS = [
   { value: '34',    label: 'GAMES'   },
@@ -25,6 +24,11 @@ const containerV = {
 const itemV = {
   hidden:  { opacity: 0, y: 28 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
+} as const;
+
+const fadeOut = {
+  initial: { opacity: 1, y: 0, scale: 1 },
+  exit:    { opacity: 0, y: -12, scale: 0.92, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as const } },
 } as const;
 
 // ─── Stat panel ───────────────────────────────────────────────────────────────
@@ -108,9 +112,17 @@ function CornerBrackets() {
   );
 }
 
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+export interface HeroProps {
+  readonly isPanelOpen?: boolean;
+  readonly panelSide?: 'left' | 'right';
+}
+
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
-export function Hero() {
+export function Hero({ isPanelOpen = false }: HeroProps) {
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
   const springX = useSpring(rawX, SPRING);
@@ -119,16 +131,69 @@ export function Hero() {
   const logoY = useTransform(springY, [-0.5, 0.5], [-12, 12]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if (isPanelOpen) return;
     if (typeof window !== 'undefined' && window.innerWidth <= 768) return;
     rawX.set(e.clientX / window.innerWidth - 0.5);
     rawY.set(e.clientY / window.innerHeight - 0.5);
-  }, [rawX, rawY]);
+  }, [rawX, rawY, isPanelOpen]);
 
   const handleMouseLeave = useCallback(() => { rawX.set(0); rawY.set(0); }, [rawX, rawY]);
 
   const scrollToGames   = useCallback(() => { window.dispatchEvent(new CustomEvent('open-panel', { detail: 'games' })); }, []);
   const scrollToContact = useCallback(() => { window.dispatchEvent(new CustomEvent('open-panel', { detail: 'contact' })); }, []);
 
+  // ─── Mini logo mode (panel is open) ─────────────────────────────────────────
+  if (isPanelOpen) {
+    return (
+      <motion.div
+        key="mini-logo"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.5 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        aria-label="Gladiator Studio — click to close panel"
+        style={{ position: 'relative', cursor: 'pointer', userSelect: 'none' }}
+      >
+        {/* The logo — white SVG with pulsing blue glow, no background/border/circle */}
+        <motion.img
+          src="/gladiator-logo.svg"
+          alt="Gladiator Studio"
+          animate={{
+            filter: [
+              'brightness(0) invert(1) drop-shadow(0 0 8px rgba(79,195,247,0.6))',
+              'brightness(0) invert(1) drop-shadow(0 0 20px rgba(79,195,247,1)) drop-shadow(0 0 40px rgba(79,195,247,0.4))',
+              'brightness(0) invert(1) drop-shadow(0 0 8px rgba(79,195,247,0.6))',
+            ],
+          }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            width: 64,
+            height: 'auto',
+            display: 'block',
+          }}
+        />
+
+        {/* "CLOSE" label that appears on hover */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+          style={{
+            position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
+            transform: 'translateX(-50%)',
+            fontFamily: MONO, fontSize: 8, fontWeight: 700,
+            letterSpacing: '0.2em', textTransform: 'uppercase',
+            color: CYAN, whiteSpace: 'nowrap',
+            textShadow: `0 0 8px ${CYAN}`,
+            pointerEvents: 'none',
+          }}
+        >
+          [ CLOSE ]
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  // ─── Full hero mode ──────────────────────────────────────────────────────────
   return (
     <section
       id="home"
@@ -156,24 +221,26 @@ export function Hero() {
           width: '100%', maxWidth: 900 }}>
 
         {/* Eyebrow badge */}
-        <motion.div variants={itemV} style={{ marginBottom: 24 }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 16px', borderRadius: 9999,
-            border: '1px solid rgba(79,195,247,0.2)', background: 'rgba(79,195,247,0.06)',
-            color: CYAN, fontFamily: MONO, fontSize: 11, fontWeight: 600,
-            letterSpacing: '0.18em', textTransform: 'uppercase',
-          }}>
-            <span className="animate-electric-pulse" aria-hidden="true"
-              style={{ width: 6, height: 6, borderRadius: '50%', background: CYAN,
-                flexShrink: 0, display: 'inline-block' }} />
-            A MetaWin Studio —{' '}
-            <a href="https://metawin.com" target="_blank" rel="noopener noreferrer"
-              style={{ color: CYAN, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-              metawin.com
-            </a>
-          </span>
-        </motion.div>
+        <AnimatePresence>
+          <motion.div key="badge" variants={itemV} {...fadeOut} style={{ marginBottom: 24 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '6px 16px', borderRadius: 9999,
+              border: '1px solid rgba(79,195,247,0.2)', background: 'rgba(79,195,247,0.06)',
+              color: CYAN, fontFamily: MONO, fontSize: 11, fontWeight: 600,
+              letterSpacing: '0.18em', textTransform: 'uppercase',
+            }}>
+              <span className="animate-electric-pulse" aria-hidden="true"
+                style={{ width: 6, height: 6, borderRadius: '50%', background: CYAN,
+                  flexShrink: 0, display: 'inline-block' }} />
+              A MetaWin Studio —{' '}
+              <a href="https://metawin.com" target="_blank" rel="noopener noreferrer"
+                style={{ color: CYAN, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                metawin.com
+              </a>
+            </span>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Logo centerpiece + subtitle */}
         <motion.div variants={itemV} style={{ x: logoX, y: logoY,

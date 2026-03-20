@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useFeederSocket, type FeedEvent } from './useFeederSocket';
-import { SectionWrapper } from '@/shared/components/SectionWrapper';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -134,6 +133,7 @@ function FeedPanel({
     // Prepend each new event as a DOM node
     for (let i = newItems.length - 1; i >= 0; i--) {
       const ev = newItems[i];
+      if (!ev) continue;
       const isGladiator = ev.provider === 'gladiator';
       const barColor = isGladiator ? CYAN : PURPLE;
       const isBigWin = ev.amount >= 100;

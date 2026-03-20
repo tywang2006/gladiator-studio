@@ -63,16 +63,32 @@ const BTN_BASE: React.CSSProperties = {
   boxShadow: 'inset 0 1px 0 rgba(79,195,247,0.15), 0 2px 6px rgba(0,0,0,0.4)',
 };
 
-const CAPABILITIES = [
-  'ULTRA Volatility by design',
-  'Provably Fair RNG — certified',
-  'MetaWin infrastructure',
-  'One API — full catalogue',
+const FEATURE_CARDS: readonly { readonly tag: string; readonly title: string; readonly body: string }[] = [
+  {
+    tag: 'VOLATILITY',
+    title: 'ULTRA Volatility. By Design.',
+    body: 'Every Gladiator game is built to ULTRA volatility specification. Our maths team calibrates each title for peak win ceilings that create the social moments high-value players seek — and that operators use to drive acquisition.',
+  },
+  {
+    tag: 'INTEGRITY',
+    title: 'Provably Fair Mathematics',
+    body: 'All Gladiator titles use certified RNG with full audit trails. RTPs are published, testable, and consistent across every integration. Compliance documentation ready on request for licensed jurisdictions.',
+  },
+  {
+    tag: 'INFRASTRUCTURE',
+    title: 'Powered by MetaWin Infrastructure',
+    body: 'Games run on the same AWS and GCP infrastructure that handles MetaWin global casino traffic. Sub-100ms round-trip times, 99.99% uptime SLA, and real-time bet data via our feeder system across every integrated market.',
+  },
+  {
+    tag: 'INTEGRATION',
+    title: 'One Integration. Full Catalogue.',
+    body: 'A single API connection gives operators access to all 8 Gladiator slots and 26 MetaWin Originals. JSON-based integration docs, sandbox environment, and a dedicated technical account manager with every partner onboarding.',
+  },
 ] as const;
 
-const TECH = ['WebGL', 'TypeScript', 'Pixi.js', 'Node.js', 'AWS', 'GCP'] as const;
+const TECH = ['WebGL', 'TypeScript', 'Pixi.js', 'Babylon.js', 'Node.js', 'AWS', 'GCP', 'BigQuery'] as const;
 
-const METRICS: { value: string; label: string }[] = [
+const METRICS: readonly { readonly value: string; readonly label: string }[] = [
   { value: '34', label: 'GAMES' },
   { value: '97.5%', label: 'MAX RTP' },
   { value: '7', label: 'MARKETS' },
@@ -88,17 +104,17 @@ export function AboutSection() {
         </div>
         <div style={{ borderTop: '1px solid rgba(79,195,247,0.25)', paddingTop: '10px' }}>
           <span style={{ fontFamily: MONO, fontSize: '15px', color: 'rgba(255,255,255,0.9)', letterSpacing: '0.18em', fontWeight: 700 }}>
-            GLADIATOR STUDIO
+            THE STUDIO THAT POWERS METAWIN
           </span>
         </div>
         <div style={{ borderTop: '1px solid rgba(79,195,247,0.25)', marginTop: '10px' }} />
       </div>
 
-      {/* OVERVIEW */}
+      {/* DOSSIER: Identity and Origin */}
       <div style={CARD_STYLE}>
-        <div style={LABEL_STYLE}>// OVERVIEW</div>
-        <p style={BODY_STYLE}>
-          In-house game studio of{' '}
+        <div style={LABEL_STYLE}>// DOSSIER</div>
+        <p style={{ ...BODY_STYLE, marginBottom: '10px' }}>
+          Gladiator Studio is the in-house game development division of{' '}
           <a
             href="https://metawin.com"
             target="_blank"
@@ -107,7 +123,13 @@ export function AboutSection() {
           >
             MetaWin
           </a>
-          , the world's leading crypto casino. We design ULTRA-volatility slots from the ground up — cinematic quality, provably fair, built for high-value players.
+          , the world's leading crypto casino. Founded in London, we design and build slot games from the ground up — combining high-volatility mechanics, provably fair mathematics, and cinematic production quality for a player base that expects nothing less.
+        </p>
+        <p style={{ ...BODY_STYLE, marginBottom: '10px' }}>
+          Every title in our catalogue carries ULTRA volatility and RTPs above 96%, engineered for the crypto-native player who plays for life-changing hits. Our stack is built on WebGL, Babylon.js 3D, and TypeScript — running on AWS and GCP infrastructure capable of serving millions of concurrent sessions. We own the full production pipeline: game design, mathematics, front-end rendering, back-end integration, and live ops.
+        </p>
+        <p style={BODY_STYLE}>
+          For operators and aggregators, integrating Gladiator Studio means accessing a battle-tested content library of 34 titles backed by MetaWin platform infrastructure. Seamless API integration, real-time bet data via our feeder system, and dedicated account support. Whether you are a tier-one operator or a fast-growing platform, our games are built to perform in your lobby from day one.
         </p>
       </div>
 
@@ -124,18 +146,16 @@ export function AboutSection() {
         </div>
       </div>
 
-      {/* CAPABILITIES */}
-      <div style={CARD_STYLE}>
-        <div style={LABEL_STYLE}>// CAPABILITIES</div>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-          {CAPABILITIES.map((cap) => (
-            <li key={cap} style={{ ...BODY_STYLE, display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ color: 'rgba(79,195,247,0.8)', flexShrink: 0 }}>▸</span>
-              {cap}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* FEATURE CARDS */}
+      {FEATURE_CARDS.map((card) => (
+        <div key={card.tag} style={CARD_STYLE}>
+          <div style={LABEL_STYLE}>// {card.tag}</div>
+          <div style={{ fontFamily: MONO, fontSize: '13px', color: 'rgba(255,255,255,0.85)', fontWeight: 700, marginBottom: '8px', letterSpacing: '0.04em' }}>
+            {card.title}
+          </div>
+          <p style={BODY_STYLE}>{card.body}</p>
+        </div>
+      ))}
 
       {/* TECH STACK */}
       <div style={CARD_STYLE}>
@@ -164,6 +184,12 @@ export function AboutSection() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '16px' }}>
         <a href="https://metawin.com" target="_blank" rel="noopener noreferrer" style={BTN_BASE}>
           VISIT METAWIN
+        </a>
+        <a
+          href="mailto:cwang@metawin.inc?subject=Demo Request — Gladiator Studio V2"
+          style={{ ...BTN_BASE, background: 'rgba(79,195,247,0.07)' }}
+        >
+          REQUEST DEMO
         </a>
         <button
           type="button"

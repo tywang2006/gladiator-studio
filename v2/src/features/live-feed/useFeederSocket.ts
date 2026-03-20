@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { sceneEvents } from '@/shared/utils/sceneEvents';
+import { soundEngine } from '@/shared/utils/soundEngine';
 
 const SOCKET_URL = 'https://socket.prod.platform.metawin.com';
 const CHANNEL = 'Activity:Globe';
@@ -147,6 +148,7 @@ export function useFeederSocket(): FeederState {
     if (event.amount >= 100) {
       // $100+ — beam (gold→amber→red based on amount)
       sceneEvents.emitWin({ lat: beamLat, lng: beamLng, amount: event.amount, gameName: event.gameName });
+      if (event.amount >= 1000) { soundEngine.bigWin(); } else { soundEngine.alert(); }
     } else {
       // <$100 — small ring ripple only
       sceneEvents.emitRing({ lat: beamLat, lng: beamLng, amount: event.amount });

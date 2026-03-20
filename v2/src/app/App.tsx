@@ -11,6 +11,7 @@ import { sceneEvents } from '@/shared/utils/sceneEvents';
 import { CLIENT_AREA_URL } from '@/shared/constants/urls';
 import { AgeGate, useAgeGate } from '@/shared/components/AgeGate';
 import { WarpIntro } from '@/shared/components/WarpIntro';
+import { soundEngine } from '@/shared/utils/soundEngine';
 
 const LiveActivityFeed = lazy(() => import('@/features/live-feed/LiveActivityFeed').then(m => ({ default: m.LiveActivityFeed })));
 const GameShowcase = lazy(() => import('@/features/games/GameShowcase').then(m => ({ default: m.GameShowcase })));
@@ -22,8 +23,6 @@ const ContactSection = lazy(() => import('@/features/contact/ContactSection').th
 
 const CYAN = '#4fc3f7';
 const MONO = "'SF Mono','Menlo','Consolas',monospace" as const;
-const VOID = 'rgba(8,12,24,0.92)';
-const PANEL_BG = 'rgba(8,12,24,0.88)';
 const CYAN_DIM = 'rgba(79,195,247,0.2)';
 const BEVEL = 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))';
 const HUD: React.CSSProperties = { fontFamily: MONO, fontSize: '10px', letterSpacing: '1.5px', fontWeight: 600, textTransform: 'uppercase' as const };
@@ -39,12 +38,6 @@ const BTN_3D: React.CSSProperties = {
   borderBottom: '1px solid rgba(0,0,0,0.5)',
   borderLeft: '1px solid rgba(79,195,247,0.1)',
   borderRight: '1px solid rgba(79,195,247,0.1)',
-};
-const BTN_3D_ACTIVE: React.CSSProperties = {
-  background: 'linear-gradient(180deg, rgba(10,15,25,0.98) 0%, rgba(20,30,50,0.95) 100%)',
-  boxShadow: `inset 0 2px 6px rgba(0,0,0,0.6), inset 0 0 12px rgba(79,195,247,0.1), 0 0 8px rgba(79,195,247,0.2)`,
-  borderTop: '1px solid rgba(0,0,0,0.4)',
-  borderBottom: '1px solid rgba(79,195,247,0.15)',
 };
 const BAR_3D: React.CSSProperties = {
   background: 'linear-gradient(180deg, rgba(20,28,45,0.96) 0%, rgba(8,12,24,0.98) 50%, rgba(14,20,36,0.96) 100%)',
@@ -617,8 +610,8 @@ function CommandButton({ label, panelId, active, onClick }: CommandButtonProps) 
 
   return (
     <button
-      onClick={() => onClick(panelId)}
-      onMouseEnter={() => setHovered(true)}
+      onClick={() => { soundEngine.click(); onClick(panelId); }}
+      onMouseEnter={() => { setHovered(true); soundEngine.hover(); }}
       onMouseLeave={() => setHovered(false)}
       aria-pressed={active}
       style={{
@@ -650,6 +643,45 @@ function CommandButton({ label, panelId, active, onClick }: CommandButtonProps) 
       }}
     >
       {label}
+    </button>
+  );
+}
+
+// ─── Sound toggle ────────────────────────────────────────────────────────────
+
+function SoundToggle() {
+  const [isMuted, setIsMuted] = useState(() => soundEngine.isMuted());
+  const [hovered, setHovered] = useState(false);
+
+  const toggle = useCallback(() => {
+    const nowMuted = soundEngine.toggleMute();
+    setIsMuted(nowMuted);
+  }, []);
+
+  return (
+    <button
+      onClick={toggle}
+      onMouseEnter={() => { setHovered(true); soundEngine.hover(); }}
+      onMouseLeave={() => setHovered(false)}
+      aria-label={isMuted ? 'Unmute sound' : 'Mute sound'}
+      title={isMuted ? 'Sound OFF' : 'Sound ON'}
+      style={{
+        ...HUD,
+        width: '32px', height: '32px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: hovered ? 'rgba(79,195,247,0.1)' : 'transparent',
+        border: `1px solid ${hovered ? 'rgba(79,195,247,0.3)' : 'rgba(79,195,247,0.1)'}`,
+        borderRadius: 4,
+        color: isMuted ? 'rgba(255,255,255,0.3)' : CYAN,
+        cursor: 'pointer',
+        outline: 'none',
+        flexShrink: 0,
+        position: 'relative', zIndex: 2,
+        transition: 'all 0.2s',
+        fontSize: '14px',
+      }}
+    >
+      {isMuted ? '🔇' : '🔊'}
     </button>
   );
 }
@@ -725,6 +757,7 @@ function StatusBar({ isConnected, totalEvents, totalAmount }: StatusBarProps) {
           </span>
         </span>
       </div>
+      <SoundToggle />
       <a
         href={CLIENT_AREA_URL}
         target="_blank"
@@ -834,7 +867,7 @@ function ContentPanel({ panelId, side, onClose, children }: ContentPanelProps) {
           {panelId.toUpperCase()} CONSOLE
         </span>
         <button
-          onClick={onClose}
+          onClick={() => { soundEngine.click(); onClose(); }}
           aria-label={`Close ${panelId} panel`}
           style={{
             background: 'none', border: `1px solid ${CYAN_DIM}`, color: 'rgba(255,255,255,0.5)',
@@ -953,10 +986,17 @@ export function App() {
   }, []);
 
   const handleActivate = useCallback((id: PanelId) => {
-    setActivePanel(prev => (prev === id ? 'none' : id));
+    setActivePanel(prev => {
+      const next = prev === id ? 'none' : id;
+      if (next === 'none') { soundEngine.panelClose(); } else { soundEngine.panelOpen(); }
+      return next;
+    });
   }, []);
 
-  const handleClose = useCallback(() => setActivePanel('none'), []);
+  const handleClose = useCallback(() => {
+    soundEngine.panelClose();
+    setActivePanel('none');
+  }, []);
 
   // Fly 3D camera to the celestial body associated with the active panel
   useEffect(() => {
@@ -972,7 +1012,7 @@ export function App() {
 
   // Warp intro — plays once after age gate is passed, before main HUD appears
   if (!introComplete) {
-    return <WarpIntro onComplete={() => setIntroComplete(true)} />;
+    return <WarpIntro onComplete={() => { setIntroComplete(true); soundEngine.startAmbient(); }} />;
   }
 
   return (
@@ -1097,28 +1137,53 @@ export function App() {
       {/* 3D scene — always visible behind everything */}
       <StarfieldCanvas />
 
-      {/* Hero floats over 3D scene — centers in non-panel space */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '40px',
-          bottom: '48px',
-          left: activePanel !== 'none' && activeSide === 'left' ? 'clamp(320px, 45vw, 680px)' : '0',
-          right: activePanel !== 'none' && activeSide === 'right' ? 'clamp(320px, 45vw, 680px)' : '0',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 10,
-          pointerEvents: 'auto',
-          opacity: activePanel !== 'none' ? 0.15 : 1,
-          cursor: activePanel !== 'none' ? 'pointer' : 'default',
-          transition: 'opacity 0.5s ease, left 0.5s ease, right 0.5s ease',
-        }}
-        aria-hidden={activePanel !== 'none'}
-        onClick={activePanel !== 'none' ? handleClose : undefined}
-        role={activePanel !== 'none' ? 'button' : undefined}
-        tabIndex={activePanel !== 'none' ? 0 : undefined}
-      >
-        <Hero />
-      </div>
+      {/* Hero — full mode when no panel, mini corner logo when panel is open */}
+      <AnimatePresence mode="popLayout">
+        {activePanel === 'none' ? (
+          <motion.div
+            key="hero-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.35 }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 10,
+              pointerEvents: 'auto',
+            }}
+          >
+            <Hero isPanelOpen={false} panelSide={activeSide} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="hero-mini"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            onClick={handleClose}
+            role="button"
+            aria-label="Close panel"
+            tabIndex={0}
+            onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') handleClose(); }}
+            style={{
+              position: 'absolute',
+              top: 72,
+              // Position in the corner OPPOSITE to the panel side
+              ...(activeSide === 'left'
+                ? { right: 24, left: 'auto' }
+                : { left: 24, right: 'auto' }),
+              zIndex: 10,
+              pointerEvents: 'auto',
+              cursor: 'pointer',
+            }}
+          >
+            <Hero isPanelOpen={true} panelSide={activeSide} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Top HUD */}
       <StatusBar isConnected={isConnected} totalEvents={totalEvents} totalAmount={totalAmount} />

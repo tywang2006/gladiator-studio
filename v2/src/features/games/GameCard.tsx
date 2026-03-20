@@ -7,10 +7,7 @@ import type { Game } from '@/shared/types/game';
 
 const CYAN = '#4fc3f7';
 const GOLD = '#ffd54f';
-const DANGER = '#ef5350';
 const PANEL_BG = 'linear-gradient(135deg, rgba(20,28,45,0.9) 0%, rgba(8,12,24,0.95) 50%, rgba(14,20,36,0.9) 100%)';
-const BORDER_DEFAULT = 'rgba(79, 195, 247, 0.12)';
-const BORDER_HOVER = 'rgba(79, 195, 247, 0.4)';
 const GLOW_HOVER = '0 0 20px rgba(79, 195, 247, 0.25), 0 0 40px rgba(79, 195, 247, 0.08)';
 const GLOW_REST = '0 4px 24px rgba(0, 0, 0, 0.5)';
 const SCANLINE = 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(79,195,247,0.03) 2px, rgba(79,195,247,0.03) 4px)';

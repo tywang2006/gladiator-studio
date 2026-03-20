@@ -23,8 +23,6 @@ const CAMERA_ALPHA = -Math.PI / 2;
 const CAMERA_BETA = Math.PI / 2.5;
 const CAMERA_RADIUS = 18;
 const CAMERA_AUTO_ROTATE = 0.00015;
-const PARALLAX_RANGE = 1.5;
-const PARALLAX_LERP = 0.04;
 const CAMERA_LERP_SPEED = 0.02;
 
 // Per-panel camera fly-to targets (alpha, beta, radius for ArcRotateCamera)
@@ -274,6 +272,7 @@ function buildOrbitalRing(
 
   for (let i = 0; i < bandConfigs.length; i++) {
     const cfg = bandConfigs[i];
+    if (!cfg) continue;
     const mesh = BABYLON.MeshBuilder.CreateTorus(
       'ringBand_' + i,
       { diameter: cfg.radius * 2, thickness: cfg.tube * 2, tessellation: 128 },
@@ -393,7 +392,7 @@ function buildDistantPlanets(
   // Gas giant procedural band texture (Jupiter/Saturn-like)
   const gasTexSize = 256;
   const gasTex = new BABYLON.DynamicTexture('gasSurfaceTex', gasTexSize, scene, true);
-  const gCtx = gasTex.getContext();
+  const gCtx = gasTex.getContext() as CanvasRenderingContext2D;
   const bandColors = ['#5C4033', '#6B4F3A', '#4A3828', '#7B5F4F', '#3D2B1F', '#6B5042', '#4A3828'];
   const bandHeight = gasTexSize / bandColors.length;
   bandColors.forEach((color, i) => {
@@ -564,6 +563,7 @@ function buildSatellites(
 
   for (let idx = 0; idx < configs.length; idx++) {
     const config = configs[idx];
+    if (!config) continue;
 
     // Orbit pivot node — tilted for inclination
     const node = new BABYLON.TransformNode('satOrbit_' + idx, scene);
@@ -665,14 +665,18 @@ function buildSatellites(
       const width = w * (1.0 - t * 0.8); // taper toward tail
 
       const p = pts[i];
+      if (!p) continue;
 
       let tangent: InstanceType<BabylonModule['Vector3']>;
       if (i === 0) {
-        tangent = pts[0].subtract(pts[1]);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        tangent = pts[0]!.subtract(pts[1]!);
       } else if (i === count - 1) {
-        tangent = pts[i - 1].subtract(pts[i]);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        tangent = pts[i - 1]!.subtract(pts[i]!);
       } else {
-        tangent = pts[i - 1].subtract(pts[i + 1]);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        tangent = pts[i - 1]!.subtract(pts[i + 1]!);
       }
       tangent.normalize();
 
@@ -909,6 +913,7 @@ function buildFlybyShips(
 
     for (let i = ships.length - 1; i >= 0; i--) {
       const ship = ships[i];
+      if (!ship) continue;
       ship.progress += dt / ship.duration;
 
       if (ship.progress >= 1) {
@@ -1299,7 +1304,7 @@ function buildScene(
 
   const unsubscribeCameraTarget = sceneEvents.onCameraTarget(({ panelId }) => {
     // ── Camera target lerp ───────────────────────────────────────────────────
-    const target = CAMERA_TARGETS[panelId] ?? CAMERA_TARGETS['none'];
+    const target = CAMERA_TARGETS[panelId] ?? CAMERA_TARGETS['none'] ?? { alpha: CAMERA_ALPHA, beta: Math.PI / 2.5, radius: CAMERA_RADIUS };
     cameraTargetAlpha  = target.alpha;
     cameraTargetBeta   = target.beta;
     cameraTargetRadius = target.radius;
@@ -1485,6 +1490,7 @@ function buildScene(
     const now = Date.now();
     for (let i = activeBeams.length - 1; i >= 0; i--) {
       const beam = activeBeams[i];
+      if (!beam) continue;
       if (!beam.metadata?.expiry || now > beam.metadata.expiry) {
         beam.dispose();
         activeBeams.splice(i, 1);
@@ -1553,45 +1559,6 @@ function buildScene(
   });
 
   return scene;
-}
-
-// ─── Space station GLB loader ─────────────────────────────────────────────────
-
-async function loadSpaceStation(
-  BABYLON: BabylonModule,
-  scene: InstanceType<BabylonModule['Scene']>,
-): Promise<InstanceType<BabylonModule['AbstractMesh']> | null> {
-  try {
-    const result = await BABYLON.SceneLoader.ImportMeshAsync(
-      '',
-      '/models/',
-      'space_station.glb',
-      scene,
-    );
-
-    // Scale and position the station
-    const root = result.meshes[0];
-    root.scaling.setAll(0.3);
-    root.position = new BABYLON.Vector3(15, 5, -10);
-    root.rotation.y = Math.PI / 4;
-
-    // Slow rotation
-    scene.registerBeforeRender(() => {
-      root.rotation.y += 0.0002;
-    });
-
-    // Make it slightly emissive so visible in dark space
-    for (const mesh of result.meshes) {
-      if (mesh.material && 'emissiveColor' in mesh.material) {
-        (mesh.material as Record<string, unknown>)['emissiveColor'] = new BABYLON.Color3(0.05, 0.08, 0.12);
-      }
-    }
-
-    return root;
-  } catch (err) {
-    console.warn('[StarfieldBackground] Failed to load space station:', err);
-    return null;
-  }
 }
 
 // ─── React component ──────────────────────────────────────────────────────────
