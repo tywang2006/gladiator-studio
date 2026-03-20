@@ -65,16 +65,19 @@ function StatPanel({ label, value, valueColor = CYAN }: StatPanelProps) {
         padding: '6px 10px',
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'space-between',
         gap: 4,
+        minHeight: 52,
       }}
     >
       <span
         style={{
           fontFamily: MONO,
-          fontSize: 11,
+          fontSize: 10,
           letterSpacing: '1.5px',
           textTransform: 'uppercase',
           color: 'rgba(255,255,255,0.5)',
+          lineHeight: 1.2,
         }}
       >
         {label}
@@ -297,7 +300,7 @@ export function LiveActivityFeed() {
           valueColor={isConnected ? GREEN : RED}
         />
         <StatPanel label="EVENTS/S" value={eventsPerSecond.toFixed(0)} />
-        <StatPanel label="TOTAL WAGERED" value={formatUSD(totalAmount)} />
+        <StatPanel label="WAGERED" value={formatUSD(totalAmount)} />
         <StatPanel label="EVENTS" value={`${gladiatorCount + originalCount}`} />
       </div>
 

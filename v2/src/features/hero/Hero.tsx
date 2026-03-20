@@ -205,7 +205,7 @@ export function Hero({ isPanelOpen = false }: HeroProps) {
       style={{ position: 'relative', height: '100%', display: 'flex',
         flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden', background: 'transparent',
-        padding: isMobile ? '40px 12px 56px' : '50px 16px 48px' }}
+        padding: isMobile ? '40px 12px 20px' : '50px 16px 48px' }}
     >
       {/* Scanline overlay */}
       <div className="scanline-bg" aria-hidden="true"

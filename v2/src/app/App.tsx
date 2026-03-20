@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ExternalLink, Volume2, VolumeOff } from 'lucide-react';
+import { X, ExternalLink, Volume2, VolumeOff, Menu, Gamepad2, Info, Users, Map, Radio, Briefcase, Mail } from 'lucide-react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { Hero } from '@/features/hero/Hero';
 import { fetchGameData } from '@/api/gameData';
@@ -478,7 +478,6 @@ const LEFT_PANELS: readonly PanelId[] = ['games', 'about', 'team', 'journey'];
 interface CommandButtonProps {
   readonly label: string; readonly panelId: PanelId;
   readonly active: boolean; readonly onClick: (id: PanelId) => void;
-  readonly isMobile?: boolean;
 }
 
 // ─── useValueFlash hook ────────────────────────────────────────────────────────
@@ -606,7 +605,7 @@ function HoloNoise() {
 
 // ─── Command button ───────────────────────────────────────────────────────────
 
-function CommandButton({ label, panelId, active, onClick, isMobile = false }: CommandButtonProps) {
+function CommandButton({ label, panelId, active, onClick }: CommandButtonProps) {
   const [hovered, setHovered] = useState(false);
   const lit = active || hovered;
 
@@ -631,8 +630,8 @@ function CommandButton({ label, panelId, active, onClick, isMobile = false }: Co
             ? 'inset 0 1px 0 rgba(79,195,247,0.15), inset 0 -1px 0 rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.5), 0 0 12px rgba(79,195,247,0.15)'
             : 'inset 0 1px 0 rgba(79,195,247,0.15), inset 0 -1px 0 rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.5)',
         color: lit ? CYAN : 'rgba(255,255,255,0.5)',
-        padding: isMobile ? '8px 10px' : '10px 16px',
-        minWidth: isMobile ? '60px' : '80px',
+        padding: '10px 16px',
+        minWidth: '80px',
         minHeight: '44px',
         cursor: 'pointer',
         outline: 'none',
@@ -642,7 +641,7 @@ function CommandButton({ label, panelId, active, onClick, isMobile = false }: Co
         textAlign: 'center' as const,
         whiteSpace: 'nowrap' as const,
         flexShrink: 0,
-        fontSize: isMobile ? '9px' : '10px',
+        fontSize: '10px',
       }}
     >
       {label}
@@ -727,8 +726,12 @@ function StatusBar({ isConnected, totalEvents, totalAmount, isMobile }: StatusBa
       }}
     >
       <div aria-hidden="true" style={SCANLINE_STYLE} />
-      <img src="/gladiator-logo.svg" alt="Gladiator Studio" style={{ height: '24px', width: 'auto', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(79,195,247,0.55))', position: 'relative', zIndex: 2 }} />
-      <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM, flexShrink: 0 }} />
+      {!isMobile && (
+        <>
+          <img src="/gladiator-logo.svg" alt="Gladiator Studio" style={{ height: '24px', width: 'auto', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(79,195,247,0.55))', position: 'relative', zIndex: 2 }} />
+          <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM, flexShrink: 0 }} />
+        </>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '20px', flex: 1, justifyContent: 'center', position: 'relative', zIndex: 2 }}>
         <span style={{ ...HUD, display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.45)' }}>
           <span aria-label={isConnected ? 'Connected' : 'Disconnected'} style={{ width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0, background: isConnected ? '#00ff88' : '#ff4444', boxShadow: isConnected ? '0 0 8px #00ff88' : '0 0 8px #ff4444', animation: isConnected ? 'pulse 2s infinite' : 'none' }} />
@@ -830,8 +833,8 @@ function ContentPanel({ panelId, side, onClose, children, isMobile }: ContentPan
       aria-label={`${panelId} panel`}
       style={{
         position: 'fixed',
-        top: '40px',
-        bottom: isMobile ? '52px' : '48px',
+        top: isMobile ? 0 : '40px',
+        bottom: isMobile ? 0 : '48px',
         [isLeft ? 'left' : 'right']: 0,
         width: isMobile ? '100vw' : 'clamp(320px, 45vw, 680px)',
         ...PANEL_3D,
@@ -881,16 +884,16 @@ function ContentPanel({ panelId, side, onClose, children, isMobile }: ContentPan
           onClick={() => { soundEngine.click(); onClose(); }}
           aria-label={`Close ${panelId} panel`}
           style={{
-            background: 'none', border: `1px solid ${CYAN_DIM}`, color: 'rgba(255,255,255,0.5)',
-            width: '36px', height: '36px', cursor: 'pointer', outline: 'none', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-            transition: 'color 0.2s, border-color 0.2s',
+            background: 'rgba(79,195,247,0.08)', border: 'none', color: CYAN,
+            width: '28px', height: '28px', cursor: 'pointer', outline: 'none', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', borderRadius: '50%',
+            transition: 'background 0.2s, color 0.2s',
+            opacity: 0.7,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = CYAN; e.currentTarget.style.borderColor = CYAN; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.borderColor = CYAN_DIM; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(79,195,247,0.2)'; e.currentTarget.style.opacity = '1'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(79,195,247,0.08)'; e.currentTarget.style.opacity = '0.7'; }}
         >
-          <X size={12} aria-hidden="true" />
+          <X size={14} aria-hidden="true" />
         </button>
       </div>
 
@@ -902,78 +905,217 @@ function ContentPanel({ panelId, side, onClose, children, isMobile }: ContentPan
   );
 }
 
-// ─── Bottom command bar ───────────────────────────────────────────────────────
+// ─── Navigation menu items ────────────────────────────────────────────────────
+
+const NAV_ITEMS: readonly { label: string; panelId: PanelId; icon: React.ComponentType<{ size?: number }> }[] = [
+  { label: 'Games', panelId: 'games', icon: Gamepad2 },
+  { label: 'About', panelId: 'about', icon: Info },
+  { label: 'Team', panelId: 'team', icon: Users },
+  { label: 'Journey', panelId: 'journey', icon: Map },
+  { label: 'Live Feed', panelId: 'live', icon: Radio },
+  { label: 'Careers', panelId: 'careers', icon: Briefcase },
+  { label: 'Contact', panelId: 'contact', icon: Mail },
+] as const;
+
+// ─── Mobile side drawer ───────────────────────────────────────────────────────
+
+interface MobileDrawerProps {
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly activePanel: PanelId;
+  readonly onActivate: (id: PanelId) => void;
+}
+
+function MobileDrawer({ isOpen, onClose, activePanel, onActivate }: MobileDrawerProps) {
+  const handleSelect = useCallback((id: PanelId) => {
+    onActivate(id);
+    onClose();
+  }, [onActivate, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="drawer-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 60,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+          />
+          {/* Drawer panel */}
+          <motion.nav
+            key="drawer-panel"
+            role="navigation"
+            aria-label="Mobile navigation"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+            style={{
+              position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 61,
+              width: '260px',
+              ...PANEL_3D,
+              borderLeft: '1px solid rgba(79,195,247,0.25)',
+              display: 'flex', flexDirection: 'column',
+              paddingTop: 'env(safe-area-inset-top, 12px)',
+              paddingBottom: 'env(safe-area-inset-bottom, 12px)',
+              overflow: 'hidden',
+            }}
+          >
+            <div aria-hidden="true" style={SCANLINE_STYLE} />
+
+            {/* Drawer header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '16px 16px 12px',
+              borderBottom: '1px solid rgba(79,195,247,0.15)',
+              position: 'relative', zIndex: 2,
+            }}>
+              <span style={{ ...HUD, color: CYAN, fontSize: '11px' }}>▸ NAVIGATION</span>
+              <button
+                onClick={onClose}
+                aria-label="Close menu"
+                style={{
+                  ...BTN_3D, width: 32, height: 32,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: CYAN, cursor: 'pointer', border: 'none', borderRadius: 4,
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Nav items */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', position: 'relative', zIndex: 2 }}>
+              {NAV_ITEMS.map(({ label, panelId, icon: Icon }) => {
+                const isActive = activePanel === panelId;
+                return (
+                  <button
+                    key={panelId}
+                    onClick={() => handleSelect(panelId)}
+                    style={{
+                      ...HUD,
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '14px 20px',
+                      background: isActive ? 'rgba(79,195,247,0.12)' : 'transparent',
+                      borderLeft: isActive ? `3px solid ${CYAN}` : '3px solid transparent',
+                      border: 'none',
+                      borderLeftStyle: 'solid',
+                      borderLeftWidth: '3px',
+                      borderLeftColor: isActive ? CYAN : 'transparent',
+                      color: isActive ? CYAN : 'rgba(255,255,255,0.6)',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      letterSpacing: '1.5px',
+                      transition: 'all 0.15s',
+                      textAlign: 'left' as const,
+                    }}
+                  >
+                    <Icon size={16} />
+                    {label.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '12px 16px', borderTop: '1px solid rgba(79,195,247,0.15)',
+              position: 'relative', zIndex: 2,
+            }}>
+              <span style={{ ...HUD, fontSize: '8px', color: 'rgba(255,255,255,0.2)' }}>
+                &copy; 2026 Gladiator Studio
+              </span>
+            </div>
+          </motion.nav>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Mobile floating menu button ──────────────────────────────────────────────
+
+function MobileMenuButton({ onClick }: { readonly onClick: () => void }) {
+  return (
+    <motion.button
+      onClick={onClick}
+      aria-label="Open menu"
+      whileTap={{ scale: 0.9 }}
+      style={{
+        position: 'absolute',
+        bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
+        right: 20,
+        zIndex: 55,
+        width: 52, height: 52,
+        borderRadius: '50%',
+        ...BTN_3D,
+        border: '1px solid rgba(79,195,247,0.3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: CYAN,
+        cursor: 'pointer',
+        boxShadow: `${METAL_HIGHLIGHT}, ${METAL_SHADOW}, 0 0 20px rgba(79,195,247,0.15)`,
+      }}
+    >
+      <Menu size={22} />
+    </motion.button>
+  );
+}
+
+// ─── Desktop bottom command bar ───────────────────────────────────────────────
 
 interface CommandBarProps {
   readonly activePanel: PanelId;
   readonly onActivate: (id: PanelId) => void;
-  readonly isMobile: boolean;
 }
 
-const CMD_BUTTONS: readonly { label: string; panelId: PanelId }[] = [
-  { label: 'Games', panelId: 'games' }, { label: 'About', panelId: 'about' },
-  { label: 'Team', panelId: 'team' }, { label: 'Journey', panelId: 'journey' },
-  { label: 'Live Feed', panelId: 'live' }, { label: 'Careers', panelId: 'careers' },
-  { label: 'Contact', panelId: 'contact' },
-] as const;
-
-function CommandBar({ activePanel, onActivate, isMobile }: CommandBarProps) {
+function CommandBar({ activePanel, onActivate }: CommandBarProps) {
   return (
     <nav
       role="navigation"
       aria-label="Command bar"
       style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        height: isMobile ? '52px' : '48px',
+        height: '48px',
         ...BAR_3D,
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderTop: '1px solid rgba(79,195,247,0.15)',
         clipPath: 'polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)',
         display: 'flex', alignItems: 'center',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        padding: '0 8px',
-        gap: '4px',
+        padding: '0 16px',
+        gap: '8px',
         overflow: 'hidden',
       }}
     >
       <div aria-hidden="true" style={SCANLINE_STYLE} />
 
-      {/* Nav buttons — scrollable on mobile, fixed layout on desktop */}
-      <div
-        className="cmd-nav-scroll"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? '4px' : '6px',
-          flex: 1,
-          position: 'relative',
-          zIndex: 2,
-          overflowX: 'auto',
-          // Hide scrollbar on all browsers
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-        }}
-      >
-        {CMD_BUTTONS.map(({ label, panelId }) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, position: 'relative', zIndex: 2 }}>
+        {NAV_ITEMS.map(({ label, panelId }) => (
           <CommandButton
             key={panelId}
             label={label}
             panelId={panelId}
             active={activePanel === panelId}
             onClick={onActivate}
-            isMobile={isMobile}
           />
         ))}
       </div>
 
-      {!isMobile && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, position: 'relative', zIndex: 2 }}>
-          <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM }} />
-          <span style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>&copy; 2026 Gladiator Studio &middot; A MetaWin Company</span>
-          <a href="#" style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.2)', textDecoration: 'underline', textUnderlineOffset: '2px', whiteSpace: 'nowrap', outline: 'none' }}>Resp. Gaming</a>
-        </div>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, position: 'relative', zIndex: 2 }}>
+        <span aria-hidden="true" style={{ width: '1px', height: '20px', background: CYAN_DIM }} />
+        <span style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>&copy; 2026 Gladiator Studio &middot; A MetaWin Company</span>
+        <a href="#" style={{ ...HUD, fontSize: '9px', color: 'rgba(255,255,255,0.2)', textDecoration: 'underline', textUnderlineOffset: '2px', whiteSpace: 'nowrap', outline: 'none' }}>Resp. Gaming</a>
+      </div>
     </nav>
   );
 }
@@ -986,10 +1128,12 @@ export function App() {
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [activePanel, setActivePanel] = useState<PanelId>('none');
   const [playingGame, setPlayingGame] = useState<{ title: string; link: string } | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const { isConnected, totalAmount, gladiatorCount, originalCount } = useFeederSocket();
   const totalEvents = gladiatorCount + originalCount;
+
 
   useEffect(() => {
     fetchGameData().then(setGameData);
@@ -998,13 +1142,18 @@ export function App() {
   // Listen for game play events from GameCard
   useEffect(() => {
     const handler = (e: CustomEvent<{ title: string; link: string }>) => {
+      if (isMobile) {
+        // Mobile: show game immediately in fullscreen iframe (no blackhole animation)
+        setPlayingGame(e.detail);
+        return;
+      }
       sceneEvents.emitBlackhole(true);
       // Wait for blackhole to fully complete before showing iframe
       setTimeout(() => setPlayingGame(e.detail), 1800);
     };
     window.addEventListener('play-game' as string, handler as EventListener);
     return () => window.removeEventListener('play-game' as string, handler as EventListener);
-  }, []);
+  }, [isMobile]);
 
   // Listen for panel open events from Hero buttons
   useEffect(() => {
@@ -1218,8 +1367,10 @@ export function App() {
         ) : null}
       </AnimatePresence>
 
-      {/* Top HUD */}
-      <StatusBar isConnected={isConnected} totalEvents={totalEvents} totalAmount={totalAmount} isMobile={isMobile} />
+      {/* Top HUD — hide on mobile when panel is open */}
+      {!(isMobile && activePanel !== 'none') && (
+        <StatusBar isConnected={isConnected} totalEvents={totalEvents} totalAmount={totalAmount} isMobile={isMobile} />
+      )}
 
       {/* Sliding content panels */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 40 }}>
@@ -1248,57 +1399,111 @@ export function App() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom command bar */}
-      <CommandBar activePanel={activePanel} onActivate={handleActivate} isMobile={isMobile} />
+      {/* Navigation — desktop: bottom bar, mobile: floating button + drawer */}
+      {isMobile ? (
+        <>
+          <MobileMenuButton onClick={() => setDrawerOpen(true)} />
+          <MobileDrawer
+            isOpen={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            activePanel={activePanel}
+            onActivate={handleActivate}
+          />
+        </>
+      ) : (
+        <CommandBar activePanel={activePanel} onActivate={handleActivate} />
+      )}
 
-      {/* Game iframe overlay — animated entry + fullscreen support */}
+      {/* Game iframe overlay */}
       <AnimatePresence>
         {playingGame && (
-          <motion.div
-            key="game-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 10000,
-              background: 'rgba(0,0,0,0.92)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-            onClick={() => { sceneEvents.emitBlackhole(false); setPlayingGame(null); }}
-          >
-            <motion.div
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.85, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          isMobile ? (
+            /* Mobile: pure fullscreen iframe — no animation, no title bar, 100dvh */
+            <div
+              key="game-overlay-mobile"
               style={{
-                ...(isMobile
-                  ? { width: '100vw', height: '100vh', maxWidth: '100vw', borderRadius: 0 }
-                  : { width: '90vw', maxWidth: 1400, aspectRatio: '16/9' }),
-                ...PANEL_3D,
-                border: isMobile ? 'none' : '1px solid rgba(79,195,247,0.4)',
-                clipPath: isMobile ? 'none' : BEVEL,
+                position: 'fixed',
+                top: 0, left: 0,
+                width: '100vw',
+                height: '100dvh',
+                zIndex: 10000,
+                background: '#000',
                 overflow: 'hidden',
-                display: 'flex', flexDirection: 'column',
               }}
-              data-game-container=""
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              {/* Title bar */}
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: isMobile ? '6px 10px' : '8px 16px',
-                borderBottom: '1px solid rgba(79,195,247,0.25)',
-                ...BAR_3D,
-                flexShrink: 0,
-              }}>
-                <span style={{ ...HUD, color: CYAN, fontSize: isMobile ? '9px' : '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: isMobile ? '40vw' : 'none' }}>
-                  ▸ {playingGame.title.toUpperCase()}
-                </span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {/* Fullscreen button — hide on mobile since it's already full-viewport */}
-                  {!isMobile && (
+              <iframe
+                src={playingGame.link}
+                title={playingGame.title}
+                style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: '100vw', height: '100dvh',
+                  border: 'none', display: 'block',
+                }}
+                allow="fullscreen; autoplay; screen-orientation"
+                allowFullScreen
+              />
+              {/* Floating close button */}
+              <button
+                onClick={() => setPlayingGame(null)}
+                style={{
+                  position: 'absolute', top: 'calc(8px + env(safe-area-inset-top, 0px))', right: 8,
+                  zIndex: 10001,
+                  background: 'rgba(0,0,0,0.6)',
+                  border: '1px solid rgba(79,195,247,0.3)',
+                  borderRadius: '50%',
+                  width: 36, height: 36,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: CYAN, cursor: 'pointer',
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)',
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            /* Desktop: animated overlay with title bar */
+            <motion.div
+              key="game-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 10000,
+                background: 'rgba(0,0,0,0.92)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+              onClick={() => { sceneEvents.emitBlackhole(false); setPlayingGame(null); }}
+            >
+              <motion.div
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.85, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                style={{
+                  width: '90vw', maxWidth: 1400, aspectRatio: '16/9',
+                  ...PANEL_3D,
+                  border: '1px solid rgba(79,195,247,0.4)',
+                  clipPath: BEVEL,
+                  overflow: 'hidden',
+                  display: 'flex', flexDirection: 'column',
+                }}
+                data-game-container=""
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                {/* Title bar */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '8px 16px',
+                  borderBottom: '1px solid rgba(79,195,247,0.25)',
+                  ...BAR_3D,
+                  flexShrink: 0,
+                }}>
+                  <span style={{ ...HUD, color: CYAN, fontSize: '11px' }}>
+                    ▸ {playingGame.title.toUpperCase()}
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1320,32 +1525,31 @@ export function App() {
                     >
                       ⛶ FULLSCREEN
                     </button>
-                  )}
-                  {/* Close button */}
-                  <button
-                    onClick={() => { sceneEvents.emitBlackhole(false); setPlayingGame(null); }}
-                    style={{
-                      ...HUD, color: CYAN, fontSize: '10px',
-                      ...BTN_3D,
-                      padding: '5px 14px', cursor: 'pointer',
-                      clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
-                    }}
-                  >
-                    ✕ CLOSE
-                  </button>
+                    <button
+                      onClick={() => { sceneEvents.emitBlackhole(false); setPlayingGame(null); }}
+                      style={{
+                        ...HUD, color: CYAN, fontSize: '10px',
+                        ...BTN_3D,
+                        padding: '5px 14px', cursor: 'pointer',
+                        clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
+                      }}
+                    >
+                      ✕ CLOSE
+                    </button>
+                  </div>
                 </div>
-              </div>
-              {/* Game iframe */}
-              <iframe
-                src={playingGame.link}
-                title={playingGame.title}
-                data-game-container=""
-                style={{ flex: 1, border: 'none', width: '100%', background: '#000' }}
-                allow="fullscreen; autoplay"
-                allowFullScreen
-              />
+                {/* Game iframe */}
+                <iframe
+                  src={playingGame.link}
+                  title={playingGame.title}
+                  data-game-container=""
+                  style={{ flex: 1, border: 'none', width: '100%', background: '#000' }}
+                  allow="fullscreen; autoplay"
+                  allowFullScreen
+                />
+              </motion.div>
             </motion.div>
-          </motion.div>
+          )
         )}
       </AnimatePresence>
     </div>
