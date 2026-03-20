@@ -4,37 +4,41 @@ import { sceneEvents } from '@/shared/utils/sceneEvents';
 // ─── Dynamic Babylon.js import type alias ─────────────────────────────────────
 type BabylonModule = typeof import('@babylonjs/core');
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const STAR_COUNT = 6000;
+// ─── Mobile detection ─────────────────────────────────────────────────────────
+const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth <= 767;
+
+// ─── Constants (scaled for mobile) ────────────────────────────────────────────
+const STAR_COUNT = IS_MOBILE ? 2000 : 6000;
 const SKY_RADIUS = 120;
-const EARTH_RADIUS = 5;
-const EARTH_SEGMENTS = 64;
+const EARTH_RADIUS = IS_MOBILE ? 3.5 : 5;
+const EARTH_SEGMENTS = IS_MOBILE ? 32 : 64;
 const EARTH_ROTATION_SPEED = 0.0002;
 const ATMOSPHERE_SCALE = 1.025;
 
 // Orbital ring constants
-const RING_RADIUS = 7.5;
+const RING_RADIUS = IS_MOBILE ? 5.5 : 7.5;
 const RING_TILT_DEG = 23.4;
 const RING_TILT_RAD = (RING_TILT_DEG * Math.PI) / 180;
 const RING_ROTATION_SPEED = 0.0008;
 
-// Camera constants
+// Camera constants — push further back on mobile, center earth behind logo
 const CAMERA_ALPHA = -Math.PI / 2;
-const CAMERA_BETA = Math.PI / 2.5;
-const CAMERA_RADIUS = 18;
-const CAMERA_AUTO_ROTATE = 0.00015;
+const CAMERA_BETA = IS_MOBILE ? Math.PI / 2 : Math.PI / 2.5; // mobile: straight-on view, earth centered
+const CAMERA_RADIUS = IS_MOBILE ? 22 : 18;
+const CAMERA_AUTO_ROTATE = IS_MOBILE ? 0.00008 : 0.00015; // slower rotation on mobile
 const CAMERA_LERP_SPEED = 0.02;
 
 // Per-panel camera fly-to targets (alpha, beta, radius for ArcRotateCamera)
+const MOBILE_ZOOM = IS_MOBILE ? 4 : 0; // extra distance on mobile
 const CAMERA_TARGETS: Record<string, { readonly alpha: number; readonly beta: number; readonly radius: number }> = {
-  'none':    { alpha: CAMERA_ALPHA,  beta: Math.PI / 2.5, radius: 18 },  // default overview with auto-rotate
-  'games':   { alpha: -0.5,          beta: Math.PI / 3,   radius: 14 },  // closer to earth, angled
-  'about':   { alpha: 0.8,           beta: Math.PI / 2.2, radius: 16 },  // ice planet direction
-  'team':    { alpha: -1.2,          beta: Math.PI / 2.8, radius: 15 },  // mars direction
-  'journey': { alpha: 1.5,           beta: Math.PI / 3.5, radius: 20 },  // wide view, nebula visible
-  'live':    { alpha: 0,             beta: Math.PI / 4,   radius: 12 },  // close overhead earth view
-  'careers': { alpha: -0.8,          beta: Math.PI / 2,   radius: 22 },  // far view with gas giant
-  'contact': { alpha: 0.3,           beta: Math.PI / 1.8, radius: 16 },  // moon visible
+  'none':    { alpha: CAMERA_ALPHA,  beta: CAMERA_BETA, radius: (IS_MOBILE ? 22 : 18) },
+  'games':   { alpha: -0.5,          beta: Math.PI / 3,   radius: 14 + MOBILE_ZOOM },
+  'about':   { alpha: 0.8,           beta: Math.PI / 2.2, radius: 16 + MOBILE_ZOOM },
+  'team':    { alpha: -1.2,          beta: Math.PI / 2.8, radius: 15 + MOBILE_ZOOM },
+  'journey': { alpha: 1.5,           beta: Math.PI / 3.5, radius: 20 + MOBILE_ZOOM },
+  'live':    { alpha: 0,             beta: Math.PI / 4,   radius: 12 + MOBILE_ZOOM },
+  'careers': { alpha: -0.8,          beta: Math.PI / 2,   radius: 22 + MOBILE_ZOOM },
+  'contact': { alpha: 0.3,           beta: Math.PI / 1.8, radius: 16 + MOBILE_ZOOM },
 };
 
 // Atmosphere inline shaders
@@ -964,6 +968,10 @@ function buildScene(
     scene,
   );
   camera.detachControl();
+  // On mobile, shift camera view upward so earth sits behind the hero logo (upper-center)
+  if (IS_MOBILE) {
+    camera.targetScreenOffset.y = 1.1;
+  }
 
   // ── Lighting — reduced for deep space darkness ─────────────────────────────
   const hemisphericLight = new BABYLON.HemisphericLight(
@@ -1310,14 +1318,19 @@ function buildScene(
     cameraTargetRadius = target.radius;
     cameraHasPanel     = panelId !== 'none';
 
-    // Offset earth to center of non-panel space (panel is ~45vw)
-    const LEFT_CHECK = new Set(['games', 'about', 'team', 'journey']);
-    if (panelId === 'none') {
+    // Offset earth to center of non-panel space (panel is ~45vw, desktop only)
+    if (IS_MOBILE) {
+      // Mobile: panels are fullscreen, no X offset needed
       targetScreenOffsetX = 0;
-    } else if (LEFT_CHECK.has(panelId)) {
-      targetScreenOffsetX = 8;  // earth shifts right when left panel open
     } else {
-      targetScreenOffsetX = -8; // earth shifts left when right panel open
+      const LEFT_CHECK = new Set(['games', 'about', 'team', 'journey']);
+      if (panelId === 'none') {
+        targetScreenOffsetX = 0;
+      } else if (LEFT_CHECK.has(panelId)) {
+        targetScreenOffsetX = 8;  // earth shifts right when left panel open
+      } else {
+        targetScreenOffsetX = -8; // earth shifts left when right panel open
+      }
     }
 
     // ── Clean up previous light ──────────────────────────────────────────────
